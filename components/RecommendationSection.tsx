@@ -45,7 +45,7 @@ export default function RecommendationSection() {
       // Group films by parent_genre
       const genreMap = new Map<string, Film[]>();
       response.data.forEach((film) => {
-        const genre = film.parent_genre || film.genre;
+        const genre = film.parent_genre;
         if (!genreMap.has(genre)) {
           genreMap.set(genre, []);
         }
@@ -57,7 +57,7 @@ export default function RecommendationSection() {
         ([genre, films]) => ({
           genre,
           films: films.sort(
-            (a, b) => parseFloat(b.imdb_score) - parseFloat(a.imdb_score)
+            (a, b) => b.imdb_score - a.imdb_score
           ),
         })
       );
@@ -153,8 +153,8 @@ export default function RecommendationSection() {
             id: f.id,
             title: f.title,
             poster: f.poster,
-            imdb_score: f.imdb_score,
-            genre: f.genre,
+            imdb_score: String(f.imdb_score),
+            genre: f.parent_genre,
           }))}
         />
       ))}

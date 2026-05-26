@@ -1,10 +1,13 @@
 export type Film = {
   id: number;
   title: string;
-  genre: string;
   parent_genre: string;
-  imdb_score: string;
+  imdb_score: number;
   poster: string;
+  premiere: string;
+  primary_language: string;
+  runtime: number;
+  similarity_score: number;
 };
 
 export type RecommendationsResponse = {
