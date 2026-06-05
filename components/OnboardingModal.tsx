@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -26,12 +26,38 @@ const GENRE_POSTERS: Record<string, string> = {
   western: "https://m.media-amazon.com/images/M/MV5BOTc0MzZjYTktYzBlZC00MmViLTgyNDYtNjljNTcxMzdjODRkXkEyXkFqcGc@._V1_SX300.jpg",
 };
 
+const YEAR_OPTIONS = ["2024", "2023", "2022", "2021", "2020", "2019", "2018", "2017", "2016", "2015"];
+
+const ALL_DIRECTORS = [
+  "Christopher Nolan",
+  "Martin Scorsese",
+  "Quentin Tarantino",
+  "Steven Spielberg",
+  "Denis Villeneuve",
+  "Ridley Scott",
+  "David Fincher",
+  "James Cameron",
+  "Sam Raimi",
+  "Sam Hargrave",
+  "Russo Brothers",
+  "Bong Joon-ho",
+  "Park Chan-wook",
+  "Alfonso Cuarón",
+  "Guillermo del Toro",
+  "Jordan Peele",
+  "Ari Aster",
+  "Greta Gerwig",
+  "Wes Anderson",
+  "Edgar Wright",
+];
+
 export default function OnboardingModal() {
   const [open, setOpen] = useState(false);
-  const [step, setStep] = useState(0); // 0: Genre, 1: Actor/Year
+  const [step, setStep] = useState(0); // 0: Genre, 1: Year/Director
   const [selected, setSelected] = useState<number[]>([]);
   const [selectedActor, setSelectedActor] = useState<string | null>(null);
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
+  const [directorSearch, setDirectorSearch] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +88,13 @@ export default function OnboardingModal() {
     }
   }, [open]);
 
+  const filteredDirectors = useMemo(() => {
+    if (!directorSearch.trim()) return ALL_DIRECTORS;
+    return ALL_DIRECTORS.filter((d) =>
+      d.toLowerCase().includes(directorSearch.toLowerCase())
+    );
+  }, [directorSearch]);
+
   const toggleGenre = (id: number) => {
     setSelected((prev) => {
       if (prev.includes(id)) {
@@ -81,7 +114,6 @@ export default function OnboardingModal() {
   };
 
   const handleFinish = () => {
-    // Map selected IDs to category names
     const selectedNames = categories
       .filter((c) => selected.includes(c.id))
       .map((c) => c.name);
@@ -89,7 +121,7 @@ export default function OnboardingModal() {
     localStorage.setItem("zynema_onboarded", "true");
     localStorage.setItem("zynema_categories", JSON.stringify(selected));
     localStorage.setItem("zynema_category_names", JSON.stringify(selectedNames));
-    
+
     if (selectedActor) {
       localStorage.setItem("zynema_director", selectedActor);
     }
@@ -98,8 +130,6 @@ export default function OnboardingModal() {
     }
 
     setOpen(false);
-
-    // Notify other components that onboarding is complete
     window.dispatchEvent(new Event("zynema_onboarding_complete"));
   };
 
@@ -111,7 +141,7 @@ export default function OnboardingModal() {
 
   return (
     <Dialog open={open}>
-      <DialogContent 
+      <DialogContent
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
         className="max-w-4xl max-h-[90vh] bg-popover border-border p-0 flex flex-col gap-0 rounded-2xl overflow-hidden shadow-2xl [&>button]:hidden"
@@ -121,9 +151,9 @@ export default function OnboardingModal() {
             {step === 0 ? "Pilih genre favorit Anda" : "Sempurnakan preferensi Anda"}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground text-sm md:text-base">
-            {step === 0 
+            {step === 0
               ? "Pilih 1 - 3 genre untuk membantu kami merekomendasikan film terbaik untuk Anda."
-              : "Pilih aktor atau tahun rilis favorit (Opsional)."}
+              : "Pilih tahun rilis atau sutradara favorit (Opsional)."}
           </DialogDescription>
         </div>
 
@@ -154,8 +184,8 @@ export default function OnboardingModal() {
                   <p className="text-muted-foreground text-center text-sm max-w-xs">
                     {error}
                   </p>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={fetchCategories}
                     className="rounded-full"
                   >
@@ -169,8 +199,8 @@ export default function OnboardingModal() {
                   {categories.map((category) => {
                     const isSelected = selected.includes(category.id);
                     return (
-                      <div 
-                        key={category.id} 
+                      <div
+                        key={category.id}
                         className="flex flex-col gap-2 cursor-pointer group"
                         onClick={() => toggleGenre(category.id)}
                       >
@@ -205,53 +235,118 @@ export default function OnboardingModal() {
             </>
           ) : (
             <div className="flex flex-col gap-12 py-8 max-w-2xl mx-auto">
+              {/* Step 1: Pilih Tahun */}
               <section>
                 <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
                   <span className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm">1</span>
-                  Pilih Aktor
+                  Pilih Tahun
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div 
-                    onClick={() => setSelectedActor(selectedActor === "Sam Hargrave" ? null : "Sam Hargrave")}
-                    className={`p-6 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between group ${
-                      selectedActor === "Sam Hargrave" 
-                        ? "border-primary bg-primary/10 shadow-lg shadow-primary/10" 
-                        : "border-border bg-card hover:border-primary/50"
-                    }`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${
-                        selectedActor === "Sam Hargrave" ? "bg-primary text-black" : "bg-muted text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary"
-                      }`}>
-                        SH
-                      </div>
-                      <span className="font-semibold text-lg">Sam Hargrave</span>
+                <div className="flex flex-wrap gap-3">
+                  {YEAR_OPTIONS.map((year) => (
+                    <div
+                      key={year}
+                      onClick={() => setSelectedYear(selectedYear === year ? null : year)}
+                      className={`px-6 py-3 rounded-full border-2 transition-all cursor-pointer font-bold text-base ${
+                        selectedYear === year
+                          ? "border-primary bg-primary text-black"
+                          : "border-border bg-card hover:border-primary/50 text-foreground"
+                      }`}
+                    >
+                      {year}
                     </div>
-                    {selectedActor === "Sam Hargrave" && (
-                      <div className="text-primary">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                      </div>
-                    )}
-                  </div>
+                  ))}
                 </div>
               </section>
 
+              {/* Step 2: Cari Sutradara */}
               <section>
                 <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
                   <span className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm">2</span>
-                  Pilih Tahun
+                  Cari Sutradara
                 </h3>
-                <div className="flex flex-wrap gap-4">
-                  <div 
-                    onClick={() => setSelectedYear(selectedYear === "2020" ? null : "2020")}
-                    className={`px-8 py-4 rounded-full border-2 transition-all cursor-pointer font-bold text-lg ${
-                      selectedYear === "2020" 
-                        ? "border-primary bg-primary text-black" 
-                        : "border-border bg-card hover:border-primary/50 text-foreground"
-                    }`}
+                <div className="relative mb-4">
+                  <svg
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   >
-                    2020
-                  </div>
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Cari nama sutradara..."
+                    value={directorSearch}
+                    onChange={(e) => setDirectorSearch(e.target.value)}
+                    className="w-full pl-11 pr-10 py-3 rounded-xl border-2 border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                  />
+                  {directorSearch && (
+                    <button
+                      onClick={() => {
+                        setDirectorSearch("");
+                        setSelectedActor(null);
+                      }}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2 max-h-56 overflow-y-auto custom-scrollbar pr-1">
+                  {filteredDirectors.length === 0 ? (
+                    <p className="text-muted-foreground text-sm text-center py-6">
+                      Sutradara tidak ditemukan.
+                    </p>
+                  ) : (
+                    filteredDirectors.map((director) => (
+                      <div
+                        key={director}
+                        onClick={() =>
+                          setSelectedActor(selectedActor === director ? null : director)
+                        }
+                        className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between group ${
+                          selectedActor === director
+                            ? "border-primary bg-primary/10 shadow-lg shadow-primary/10"
+                            : "border-border bg-card hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 ${
+                              selectedActor === director
+                                ? "bg-primary text-black"
+                                : "bg-muted text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary"
+                            }`}
+                          >
+                            {director
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .slice(0, 2)
+                              .toUpperCase()}
+                          </div>
+                          <span className="font-semibold">{director}</span>
+                        </div>
+                        {selectedActor === director && (
+                          <div className="text-primary flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
                 </div>
               </section>
             </div>
@@ -261,23 +356,25 @@ export default function OnboardingModal() {
         {/* Footer actions */}
         <div className="p-6 bg-popover border-t border-border/50 flex-shrink-0 flex gap-4 justify-center shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.5)]">
           {step === 1 && (
-            <Button 
-              variant="outline" 
-              size="lg" 
+            <Button
+              variant="outline"
+              size="lg"
               onClick={() => setStep(0)}
               className="rounded-full px-8 font-bold"
             >
               Kembali
             </Button>
           )}
-          <Button 
-            size="lg" 
-            onClick={step === 0 ? handleNext : handleFinish} 
-            disabled={step === 0 && selected.length === 0 || isLoading || !!error}
+          <Button
+            size="lg"
+            onClick={step === 0 ? handleNext : handleFinish}
+            disabled={(step === 0 && selected.length === 0) || isLoading || !!error}
             className={`w-full font-bold text-lg rounded-full py-6 transition-all ${step === 0 ? "max-w-md" : "flex-1"}`}
           >
-            {step === 0 
-              ? (selected.length === 0 ? "Pilih 1 - 3 genre" : "Selanjutnya")
+            {step === 0
+              ? selected.length === 0
+                ? "Pilih 1 - 3 genre"
+                : "Selanjutnya"
               : "Selesai"}
           </Button>
         </div>
