@@ -28,7 +28,10 @@ const GENRE_POSTERS: Record<string, string> = {
 
 export default function OnboardingModal() {
   const [open, setOpen] = useState(false);
+  const [step, setStep] = useState(0); // 0: Genre, 1: Actor/Year
   const [selected, setSelected] = useState<number[]>([]);
+  const [selectedActor, setSelectedActor] = useState<string | null>(null);
+  const [selectedYear, setSelectedYear] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -71,21 +74,33 @@ export default function OnboardingModal() {
     });
   };
 
-  const handleContinue = () => {
+  const handleNext = () => {
     if (selected.length > 0) {
-      // Map selected IDs to category names
-      const selectedNames = categories
-        .filter((c) => selected.includes(c.id))
-        .map((c) => c.name);
-
-      localStorage.setItem("zynema_onboarded", "true");
-      localStorage.setItem("zynema_categories", JSON.stringify(selected));
-      localStorage.setItem("zynema_category_names", JSON.stringify(selectedNames));
-      setOpen(false);
-
-      // Notify other components that onboarding is complete
-      window.dispatchEvent(new Event("zynema_onboarding_complete"));
+      setStep(1);
     }
+  };
+
+  const handleFinish = () => {
+    // Map selected IDs to category names
+    const selectedNames = categories
+      .filter((c) => selected.includes(c.id))
+      .map((c) => c.name);
+
+    localStorage.setItem("zynema_onboarded", "true");
+    localStorage.setItem("zynema_categories", JSON.stringify(selected));
+    localStorage.setItem("zynema_category_names", JSON.stringify(selectedNames));
+    
+    if (selectedActor) {
+      localStorage.setItem("zynema_director", selectedActor);
+    }
+    if (selectedYear) {
+      localStorage.setItem("zynema_year", selectedYear);
+    }
+
+    setOpen(false);
+
+    // Notify other components that onboarding is complete
+    window.dispatchEvent(new Event("zynema_onboarding_complete"));
   };
 
   const capitalize = (str: string) =>
@@ -103,100 +118,167 @@ export default function OnboardingModal() {
       >
         <div className="p-6 md:p-8 flex-shrink-0 border-b border-border/50 text-center">
           <DialogTitle className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-            Pilih genre favorit Anda
+            {step === 0 ? "Pilih genre favorit Anda" : "Sempurnakan preferensi Anda"}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground text-sm md:text-base">
-            Pilih 1 - 3 genre untuk membantu kami merekomendasikan film terbaik untuk Anda.
+            {step === 0 
+              ? "Pilih 1 - 3 genre untuk membantu kami merekomendasikan film terbaik untuk Anda."
+              : "Pilih aktor atau tahun rilis favorit (Opsional)."}
           </DialogDescription>
         </div>
 
-        {/* Scrollable grid */}
+        {/* Scrollable content */}
         <div className="p-6 md:p-8 overflow-y-auto flex-1 custom-scrollbar">
-          {isLoading && (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="flex flex-col gap-2 animate-pulse">
-                  <div className="w-full aspect-[2/3] rounded-xl bg-muted" />
-                  <div className="h-4 w-2/3 mx-auto rounded bg-muted" />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {error && (
-            <div className="flex flex-col items-center justify-center gap-4 py-16">
-              <div className="bg-destructive/10 text-destructive rounded-full p-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="12" />
-                  <line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
-              </div>
-              <p className="text-muted-foreground text-center text-sm max-w-xs">
-                {error}
-              </p>
-              <Button 
-                variant="outline" 
-                onClick={fetchCategories}
-                className="rounded-full"
-              >
-                Coba lagi
-              </Button>
-            </div>
-          )}
-
-          {!isLoading && !error && (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-              {categories.map((category) => {
-                const isSelected = selected.includes(category.id);
-                return (
-                  <div 
-                    key={category.id} 
-                    className="flex flex-col gap-2 cursor-pointer group"
-                    onClick={() => toggleGenre(category.id)}
-                  >
-                    <div className={`relative w-full aspect-[2/3] rounded-xl overflow-hidden transition-all duration-300 ${
-                      isSelected ? "ring-4 ring-primary scale-95" : "group-hover:scale-105"
-                    }`}>
-                      <Image
-                        src={getPoster(category.name)}
-                        alt={category.name}
-                        fill
-                        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                        className={`object-cover transition-all duration-300 ${isSelected ? "opacity-60 brightness-75" : "opacity-100"}`}
-                      />
-                      {/* Genre label overlay at bottom */}
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-8">
-                        <p className={`text-center font-bold text-sm md:text-base transition-colors ${isSelected ? "text-primary" : "text-white group-hover:text-primary"}`}>
-                          {capitalize(category.name)}
-                        </p>
-                      </div>
-                      {isSelected && (
-                        <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                          <div className="bg-primary text-black rounded-full p-2 shadow-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                          </div>
-                        </div>
-                      )}
+          {step === 0 ? (
+            <>
+              {isLoading && (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="flex flex-col gap-2 animate-pulse">
+                      <div className="w-full aspect-[2/3] rounded-xl bg-muted" />
+                      <div className="h-4 w-2/3 mx-auto rounded bg-muted" />
                     </div>
+                  ))}
+                </div>
+              )}
+
+              {error && (
+                <div className="flex flex-col items-center justify-center gap-4 py-16">
+                  <div className="bg-destructive/10 text-destructive rounded-full p-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
                   </div>
-                );
-              })}
+                  <p className="text-muted-foreground text-center text-sm max-w-xs">
+                    {error}
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    onClick={fetchCategories}
+                    className="rounded-full"
+                  >
+                    Coba lagi
+                  </Button>
+                </div>
+              )}
+
+              {!isLoading && !error && (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                  {categories.map((category) => {
+                    const isSelected = selected.includes(category.id);
+                    return (
+                      <div 
+                        key={category.id} 
+                        className="flex flex-col gap-2 cursor-pointer group"
+                        onClick={() => toggleGenre(category.id)}
+                      >
+                        <div className={`relative w-full aspect-[2/3] rounded-xl overflow-hidden transition-all duration-300 ${
+                          isSelected ? "ring-4 ring-primary scale-95" : "group-hover:scale-105"
+                        }`}>
+                          <Image
+                            src={getPoster(category.name)}
+                            alt={category.name}
+                            fill
+                            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                            className={`object-cover transition-all duration-300 ${isSelected ? "opacity-60 brightness-75" : "opacity-100"}`}
+                          />
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-8">
+                            <p className={`text-center font-bold text-sm md:text-base transition-colors ${isSelected ? "text-primary" : "text-white group-hover:text-primary"}`}>
+                              {capitalize(category.name)}
+                            </p>
+                          </div>
+                          {isSelected && (
+                            <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                              <div className="bg-primary text-black rounded-full p-2 shadow-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex flex-col gap-12 py-8 max-w-2xl mx-auto">
+              <section>
+                <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm">1</span>
+                  Pilih Aktor
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div 
+                    onClick={() => setSelectedActor(selectedActor === "Sam Hargrave" ? null : "Sam Hargrave")}
+                    className={`p-6 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between group ${
+                      selectedActor === "Sam Hargrave" 
+                        ? "border-primary bg-primary/10 shadow-lg shadow-primary/10" 
+                        : "border-border bg-card hover:border-primary/50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${
+                        selectedActor === "Sam Hargrave" ? "bg-primary text-black" : "bg-muted text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary"
+                      }`}>
+                        SH
+                      </div>
+                      <span className="font-semibold text-lg">Sam Hargrave</span>
+                    </div>
+                    {selectedActor === "Sam Hargrave" && (
+                      <div className="text-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </section>
+
+              <section>
+                <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm">2</span>
+                  Pilih Tahun
+                </h3>
+                <div className="flex flex-wrap gap-4">
+                  <div 
+                    onClick={() => setSelectedYear(selectedYear === "2020" ? null : "2020")}
+                    className={`px-8 py-4 rounded-full border-2 transition-all cursor-pointer font-bold text-lg ${
+                      selectedYear === "2020" 
+                        ? "border-primary bg-primary text-black" 
+                        : "border-border bg-card hover:border-primary/50 text-foreground"
+                    }`}
+                  >
+                    2020
+                  </div>
+                </div>
+              </section>
             </div>
           )}
         </div>
 
         {/* Footer actions */}
-        <div className="p-6 bg-popover border-t border-border/50 flex-shrink-0 flex justify-center shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.5)]">
+        <div className="p-6 bg-popover border-t border-border/50 flex-shrink-0 flex gap-4 justify-center shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.5)]">
+          {step === 1 && (
+            <Button 
+              variant="outline" 
+              size="lg" 
+              onClick={() => setStep(0)}
+              className="rounded-full px-8 font-bold"
+            >
+              Kembali
+            </Button>
+          )}
           <Button 
             size="lg" 
-            onClick={handleContinue} 
-            disabled={selected.length === 0 || isLoading || !!error}
-            className="w-full max-w-md font-bold text-lg rounded-full py-6 transition-all"
+            onClick={step === 0 ? handleNext : handleFinish} 
+            disabled={step === 0 && selected.length === 0 || isLoading || !!error}
+            className={`w-full font-bold text-lg rounded-full py-6 transition-all ${step === 0 ? "max-w-md" : "flex-1"}`}
           >
-            {selected.length === 0 
-              ? "Pilih 1 - 3 genre" 
-              : `Lanjutkan (${selected.length}/3)`}
+            {step === 0 
+              ? (selected.length === 0 ? "Pilih 1 - 3 genre" : "Selanjutnya")
+              : "Selesai"}
           </Button>
         </div>
       </DialogContent>
