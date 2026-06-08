@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 
 interface Movie {
@@ -75,7 +76,8 @@ export default function MovieRow({ title, movies, isLoading }: MovieRowProps) {
                 />
               ))
             : movies.map((movie) => (
-                <div 
+                <Link
+                  href={`/films/${movie.id}`}
                   key={movie.id} 
                   className="relative flex-none w-[150px] md:w-[200px] aspect-[2/3] rounded-lg overflow-hidden group/item snap-start cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:z-30 shadow-md"
                 >
@@ -108,7 +110,7 @@ export default function MovieRow({ title, movies, isLoading }: MovieRowProps) {
                       </p>
                     )}
                   </div>
-                </div>
+                </Link>
               ))}
         </div>
 

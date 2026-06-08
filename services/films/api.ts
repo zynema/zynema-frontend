@@ -1,4 +1,4 @@
-import { RecommendationsResponse } from "./type";
+import { RecommendationsResponse, FilmDetailResponse } from "./type";
 
 const BASE_URL = "/api/proxy";
 
@@ -16,6 +16,16 @@ export async function getRecommendations(
 
   if (!res.ok) {
     throw new Error(`Failed to fetch recommendations: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export async function getFilmById(id: number): Promise<FilmDetailResponse> {
+  const res = await fetch(`${BASE_URL}/films/${id}`);
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch film: ${res.status}`);
   }
 
   return res.json();
