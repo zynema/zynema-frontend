@@ -28,29 +28,6 @@ const GENRE_POSTERS: Record<string, string> = {
 
 const YEAR_OPTIONS = ["2024", "2023", "2022", "2021", "2020", "2019", "2018", "2017", "2016", "2015"];
 
-const ALL_DIRECTORS = [
-  "Christopher Nolan",
-  "Martin Scorsese",
-  "Quentin Tarantino",
-  "Steven Spielberg",
-  "Denis Villeneuve",
-  "Ridley Scott",
-  "David Fincher",
-  "James Cameron",
-  "Sam Raimi",
-  "Sam Hargrave",
-  "Russo Brothers",
-  "Bong Joon-ho",
-  "Park Chan-wook",
-  "Alfonso Cuarón",
-  "Guillermo del Toro",
-  "Jordan Peele",
-  "Ari Aster",
-  "Greta Gerwig",
-  "Wes Anderson",
-  "Edgar Wright",
-];
-
 export default function OnboardingModal() {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0); // 0: Genre, 1: Year/Director
@@ -59,6 +36,7 @@ export default function OnboardingModal() {
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
   const [directorSearch, setDirectorSearch] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
+  const [allDirectors, setAllDirectors] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,14 +47,20 @@ export default function OnboardingModal() {
     }
   }, []);
 
-  const fetchCategories = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const catResponse = await getCategories();
+      const [catResponse, dirResponse] = await Promise.all([
+        getCategories(),
+        fetch("https://zynema-ai.vercel.app/directors").then((res) => res.json()),
+      ]);
       setCategories(catResponse.data);
+      if (dirResponse.status === "success" && Array.isArray(dirResponse.data)) {
+        setAllDirectors(dirResponse.data);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load categories");
+      setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
       setIsLoading(false);
     }
@@ -84,16 +68,16 @@ export default function OnboardingModal() {
 
   useEffect(() => {
     if (open) {
-      fetchCategories();
+      fetchData();
     }
   }, [open]);
 
   const filteredDirectors = useMemo(() => {
-    if (!directorSearch.trim()) return ALL_DIRECTORS;
-    return ALL_DIRECTORS.filter((d) =>
+    if (!directorSearch.trim()) return allDirectors;
+    return allDirectors.filter((d) =>
       d.toLowerCase().includes(directorSearch.toLowerCase())
     );
-  }, [directorSearch]);
+  }, [directorSearch, allDirectors]);
 
   const toggleGenre = (id: number) => {
     setSelected((prev) => {
@@ -186,7 +170,7 @@ export default function OnboardingModal() {
                   </p>
                   <Button
                     variant="outline"
-                    onClick={fetchCategories}
+                    onClick={fetchData}
                     className="rounded-full"
                   >
                     Coba lagi
