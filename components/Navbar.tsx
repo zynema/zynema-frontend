@@ -52,10 +52,8 @@ export default function Navbar() {
             <Link href="#" className="text-foreground hover:text-primary transition-colors">Beranda</Link>
             <Link href="#" className="hover:text-foreground transition-colors">Serial</Link>
             <Link href="#" className="hover:text-foreground transition-colors">Film</Link>
-            <Link href="#" className="hover:text-foreground transition-colors">Game</Link>
             <Link href="#" className="hover:text-foreground transition-colors">Baru & Populer</Link>
             <Link href="#" className="hover:text-foreground transition-colors">Daftar Saya</Link>
-            <Link href="#" className="hover:text-foreground transition-colors">Telusuri menurut Bahasa</Link>
           </nav>
         </div>
 
