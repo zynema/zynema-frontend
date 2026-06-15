@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { getCategories } from "@/services/categories/api";
 import { Category } from "@/services/categories/type";
+import { getDirectors } from "@/services/directors/api";
 
 const GENRE_POSTERS: Record<string, string> = {
   action: "https://m.media-amazon.com/images/M/MV5BYzMwNjVjNTEtZDVhOC00NzQzLTg0MGYtMGI1Yzc0Nzg2MjNmXkEyXkFqcGc@._V1_SX300.jpg",
@@ -53,7 +54,7 @@ export default function OnboardingModal() {
     try {
       const [catResponse, dirResponse] = await Promise.all([
         getCategories(),
-        fetch("https://zynema-ai.vercel.app/directors").then((res) => res.json()),
+        getDirectors(),
       ]);
       setCategories(catResponse.data);
       if (dirResponse.status === "success" && Array.isArray(dirResponse.data)) {
