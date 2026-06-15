@@ -8,8 +8,7 @@ Zynema is a **Next.js** web application that provides interactive movie recommen
 
 - **Onboarding Modal**: Allows users to select their favorite genres, directors, and release years when visiting the website for the first time.
 - **Movie Recommendations**: Displays personalized movie recommendations based on the selected categories.
-- **Movie Details**: Dedicated detail page (`/films/[id]`) that presents the movie plot, poster, production information, and ratings.
-- **Modern UI/UX**: Premium interface with dark mode enabled by default, smooth transitions, powered by Tailwind CSS v4 and Shadcn UI components.
+- **Movie Details**: Dedicated detail page that presents the movie plot, poster, production information, and ratings..
 
 ---
 
@@ -116,3 +115,16 @@ zynema-frontend/
 ├── package.json          # Project dependencies and scripts
 └── tsconfig.json         # TypeScript configuration
 ```
+
+---
+
+## Repository Structure
+
+This project is split into two separate repositories:
+
+| Module | Repository | Live URL |
+|--------|-----------|----------|
+| Frontend (Next.js) | [zynema/zynema-frontend](https://github.com/zynema/zynema-frontend) | [zynema-film.vercel.app](https://zynema-film.vercel.app) |
+| AI Backend (Flask) | [zynema/zynema-ai](https://github.com/zynema/zynema-ai) | [zynema-ai.vercel.app](https://zynema-ai.vercel.app) |
+
+---
