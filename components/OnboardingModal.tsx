@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { getCategories } from "@/services/categories/api";
 import { Category } from "@/services/categories/type";
 import { getDirectors } from "@/services/directors/api";
+import { getYears } from "@/services/years/api";
 
 const GENRE_POSTERS: Record<string, string> = {
   action: "https://m.media-amazon.com/images/M/MV5BYzMwNjVjNTEtZDVhOC00NzQzLTg0MGYtMGI1Yzc0Nzg2MjNmXkEyXkFqcGc@._V1_SX300.jpg",
@@ -27,8 +28,6 @@ const GENRE_POSTERS: Record<string, string> = {
   western: "https://m.media-amazon.com/images/M/MV5BOTc0MzZjYTktYzBlZC00MmViLTgyNDYtNjljNTcxMzdjODRkXkEyXkFqcGc@._V1_SX300.jpg",
 };
 
-const YEAR_OPTIONS = ["2024", "2023", "2022", "2021", "2020", "2019", "2018", "2017", "2016", "2015"];
-
 export default function OnboardingModal() {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0); // 0: Genre, 1: Year/Director
@@ -38,6 +37,7 @@ export default function OnboardingModal() {
   const [directorSearch, setDirectorSearch] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [allDirectors, setAllDirectors] = useState<string[]>([]);
+  const [yearOptions, setYearOptions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,13 +52,17 @@ export default function OnboardingModal() {
     setIsLoading(true);
     setError(null);
     try {
-      const [catResponse, dirResponse] = await Promise.all([
+      const [catResponse, dirResponse, yearResponse] = await Promise.all([
         getCategories(),
         getDirectors(),
+        getYears(),
       ]);
       setCategories(catResponse.data);
       if (dirResponse.status === "success" && Array.isArray(dirResponse.data)) {
         setAllDirectors(dirResponse.data);
+      }
+      if (yearResponse.status === "success" && Array.isArray(yearResponse.data)) {
+        setYearOptions(yearResponse.data.map(String));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
@@ -227,7 +231,7 @@ export default function OnboardingModal() {
                   Pilih Tahun
                 </h3>
                 <div className="flex flex-wrap gap-3">
-                  {YEAR_OPTIONS.map((year) => (
+                  {yearOptions.map((year) => (
                     <div
                       key={year}
                       onClick={() => setSelectedYear(selectedYear === year ? null : year)}
