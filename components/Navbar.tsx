@@ -29,11 +29,19 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const handleLogout = () => {
+    localStorage.removeItem("zynema_categories");
+    localStorage.removeItem("zynema_category_names");
+    localStorage.removeItem("zynema_director");
+    localStorage.removeItem("zynema_onboarded");
+    localStorage.removeItem("zynema_year");
+    window.location.reload();
+  };
+
   return (
     <header
-      className={`fixed top-0 w-full z-50 transition-colors duration-300 ${
-        isScrolled ? "bg-background shadow-md" : "bg-transparent bg-gradient-to-b from-black/80 to-transparent"
-      }`}
+      className={`fixed top-0 w-full z-50 transition-colors duration-300 ${isScrolled ? "bg-background shadow-md" : "bg-transparent bg-gradient-to-b from-black/80 to-transparent"
+        }`}
     >
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-8">
@@ -59,7 +67,7 @@ export default function Navbar() {
             <Bell className="w-5 h-5" />
             <span className="absolute top-0 right-0 w-2 h-2 bg-primary rounded-full"></span>
           </button>
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger className="outline-none">
               <Avatar className="w-8 h-8 rounded-sm cursor-pointer border border-transparent hover:border-primary transition-colors">
@@ -70,9 +78,7 @@ export default function Navbar() {
             <DropdownMenuContent align="end" className="w-48 bg-background border-border">
               <DropdownMenuLabel>Akun Saya</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Profil</DropdownMenuItem>
-              <DropdownMenuItem>Pengaturan</DropdownMenuItem>
-              <DropdownMenuItem>Keluar</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>Keluar</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
