@@ -1,4 +1,4 @@
-# Zynema: Film Recommendation Feature
+# Zynema — Film Recommendation
 
 Zynema is a **Next.js** web application that provides interactive movie recommendations based on users' preferred genres and categories, complete with a dedicated movie detail page.
 
